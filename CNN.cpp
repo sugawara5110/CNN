@@ -552,6 +552,28 @@ void CNN::FirstInput(float el, UINT ElNum, UINT inputsetInd) {
 	}
 }
 
+void CNN::InputArray(float* inArr, UINT arrNum, UINT inputsetInd) {
+	switch (firstLayer) {
+	case CONV:
+		cn[0]->Input(inArr, arrNum, inputsetInd);
+		break;
+	case AFFINE:
+		nn->InputArray(inArr, arrNum, inputsetInd);
+		break;
+	}
+}
+
+void CNN::InputArrayEl(float el, UINT arrNum, UINT ElNum, UINT inputsetInd) {
+	switch (firstLayer) {
+	case CONV:
+		cn[0]->InputEl(el, arrNum, ElNum, inputsetInd);
+		break;
+	case AFFINE:
+		nn->InputArrayEl(el, arrNum, ElNum, inputsetInd);
+		break;
+	}
+}
+
 void CNN::SetPixel3ch(ID3D12Resource* pi) {
 	gc->SetPixel3ch(pi);
 }

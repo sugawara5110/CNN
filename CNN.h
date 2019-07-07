@@ -140,6 +140,8 @@ public:
 	ID3D12Resource* GetOutputResource();
 	void SetTargetEl(float el, UINT ElNum);
 	void FirstInput(float el, UINT ElNum, UINT inputsetInd = 0);
+	void InputArray(float* inArr, UINT arrNum, UINT inputsetInd = 0);
+	void InputArrayEl(float el, UINT arrNum, UINT ElNum, UINT inputsetInd = 0);
 	void SetPixel3ch(ID3D12Resource* pi);
 	void SetPixel3ch(BYTE* pi);
 	void SaveData();
