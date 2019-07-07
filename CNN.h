@@ -39,7 +39,7 @@ public:
 		int depth, UINT split, UINT inputsetnum);
 	void Draw(float x, float y);
 	void InConnection();
-	void ErrConnection();
+	void ErrConnection(bool update);
 	void TestConnection();
 	void DetectionConnection(UINT SearchNum);
 };
@@ -59,7 +59,7 @@ public:
 	Pooling(UINT width, UINT height, UINT poolNum, UINT inputsetnum);
 	void Draw(float x, float y);
 	void InConnection();
-	void ErrConnection();
+	void ErrConnection(bool update);
 	void TestConnection();
 	void DetectionConnection(UINT SearchNum, bool GradCAM_ON = false);
 };
@@ -81,7 +81,7 @@ public:
 	Convolution(ActivationName activationName, UINT width, UINT height, UINT filNum, UINT inputsetnum, UINT elnumwid, UINT filstep);
 	void Draw(float x, float y);
 	void InConnection();
-	void ErrConnection();
+	void ErrConnection(bool update);
 	void TestConnection();
 	void DetectionConnection(UINT SearchNum, bool GradCAM_ON = false);
 };
@@ -130,12 +130,12 @@ public:
 	void Training();
 	void TrainingFp();
 	void TrainingBp();
+	void TrainingBpNoUpdate();
 	float GetcrossEntropyError();
 	float GetcrossEntropyErrorTest();
 	void Test();
-	void TrainingDraw();
-	void GradCAMDraw();
-	void GetOutput(float* out, UINT inputsetInd = 0);
+	void TrainingDraw(float x = 0.0f, float y = 0.0f);
+	void GradCAMDraw(float x = 50.0f, float y = 200.0f);
 	float GetOutputEl(UINT ElNum, UINT inputsetInd = 0);
 	ID3D12Resource* GetOutputResource();
 	void SetTargetEl(float el, UINT ElNum);

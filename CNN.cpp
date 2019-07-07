@@ -57,15 +57,18 @@ void Affine::InConnection() {
 	}
 }
 
-void Affine::ErrConnection() {
-	TrainingBp();
+void Affine::ErrConnection(bool update) {
+	if (update)
+		TrainingBp();
+	else
+		TrainingBpNoWeightUpdate();
 	if (errPo) {
 		errPo->SetInErrorResource(GetOutErrorResource());
-		errPo->ErrConnection();
+		errPo->ErrConnection(update);
 	}
 	if (errCn) {
 		errCn->SetInErrorResource(GetOutErrorResource());
-		errCn->ErrConnection();
+		errCn->ErrConnection(update);
 	}
 }
 
@@ -126,15 +129,15 @@ void Pooling::InConnection() {
 	}
 }
 
-void Pooling::ErrConnection() {
+void Pooling::ErrConnection(bool update) {
 	Training();
 	if (errCn) {
 		errCn->SetInErrorResource(GetOutErrorResource());
-		errCn->ErrConnection();
+		errCn->ErrConnection(update);
 	}
 	if (errAf) {
 		errAf->SetInErrorResource(GetOutErrorResource());
-		errAf->ErrConnection();
+		errAf->ErrConnection(update);
 	}
 }
 
@@ -198,19 +201,22 @@ void Convolution::InConnection() {
 	}
 }
 
-void Convolution::ErrConnection() {
-	Training();
+void Convolution::ErrConnection(bool update) {
+	if (update)
+		Training();
+	else
+		BackPropagationNoWeightUpdate();
 	if (errCn) {
 		errCn->SetInErrorResource(GetOutErrorResource());
-		errCn->ErrConnection();
+		errCn->ErrConnection(update);
 	}
 	if (errPo) {
 		errPo->SetInErrorResource(GetOutErrorResource());
-		errPo->ErrConnection();
+		errPo->ErrConnection(update);
 	}
 	if (errAf) {
 		errAf->SetInErrorResource(GetOutErrorResource());
-		errAf->ErrConnection();
+		errAf->ErrConnection(update);
 	}
 }
 
@@ -423,13 +429,27 @@ void CNN::TrainingFp() {
 void CNN::TrainingBp() {
 	switch (endLayer) {
 	case CONV:
-		cn[NumConv - 1]->ErrConnection();
+		cn[NumConv - 1]->ErrConnection(true);
 		break;
 	case POOL:
-		po[NumPool - 1]->ErrConnection();
+		po[NumPool - 1]->ErrConnection(true);
 		break;
 	case AFFINE:
-		nn->ErrConnection();
+		nn->ErrConnection(true);
+		break;
+	}
+}
+
+void CNN::TrainingBpNoUpdate() {
+	switch (endLayer) {
+	case CONV:
+		cn[NumConv - 1]->ErrConnection(false);
+		break;
+	case POOL:
+		po[NumPool - 1]->ErrConnection(false);
+		break;
+	case AFFINE:
+		nn->ErrConnection(false);
 		break;
 	}
 }
@@ -461,29 +481,45 @@ void CNN::Test() {
 	}
 }
 
-void CNN::TrainingDraw() {
-	float x = 0.0f;
+void CNN::TrainingDraw(float x0, float y) {
+	float x = x0;
 	for (UINT i = 0; i < NumConv; i++) {
-		cn[i]->Draw(x, 0.0f);
+		cn[i]->Draw(x, y);
 		x += 20.0f;
 	}
 	for (UINT i = 0; i < NumPool; i++) {
-		po[i]->Draw(x, 0.0f);
+		po[i]->Draw(x, y);
 		x += 20.0f;
 	}
-	nn->Draw(x, 0.0f);
+	nn->Draw(x, y);
 }
 
-void CNN::GradCAMDraw() {
-	gc->Draw(50.0f, 200.0f);
-}
-
-void CNN::GetOutput(float* out, UINT inputsetInd) {
-	nn->GetOutput(out, inputsetInd);
+void CNN::GradCAMDraw(float x, float y) {
+	gc->Draw(x, y);
 }
 
 float CNN::GetOutputEl(UINT ElNum, UINT inputsetInd) {
-	return nn->GetOutputEl(ElNum, inputsetInd);
+	UINT numFil = 0;
+	UINT oneFilEl = 0;
+	UINT numEl = 0;
+	switch (endLayer) {
+	case CONV:
+		oneFilEl = cn[NumConv - 1]->GetOutWidth() * cn[NumConv - 1]->GetOutHeight();
+		numFil = ElNum / oneFilEl;
+		numEl = ElNum % oneFilEl;
+		return cn[NumConv - 1]->OutputEl(numFil, numEl, inputsetInd);
+		break;
+	case POOL:
+		oneFilEl = po[NumPool - 1]->GetOutWidth() * po[NumPool - 1]->GetOutHeight();
+		numFil = ElNum / oneFilEl;
+		numEl = ElNum % oneFilEl;
+		return po[NumPool - 1]->OutputEl(numFil, numEl, inputsetInd);
+		break;
+	case AFFINE:
+		return nn->GetOutputEl(ElNum, inputsetInd);
+		break;
+	}
+	return 0.0f;
 }
 
 ID3D12Resource* CNN::GetOutputResource() {
