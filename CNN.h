@@ -87,6 +87,7 @@ public:
 };
 
 enum LayerName {
+	NONE,
 	CONV,
 	POOL,
 	AFFINE
@@ -96,7 +97,7 @@ struct Layer {
 	UINT maxThread;//最大スレッド数(全レイヤー共通)
 	UINT mapWid;//検出範囲wid
 	UINT mapHei;//検出範囲hei
-	LayerName layerName;
+	LayerName layerName = NONE;
 	UINT NumFilter;
 	UINT NumConvFilterWid;//畳み込みフィルターサイズ
 	UINT NumConvFilterSlide;//畳み込みフィルタースライド量

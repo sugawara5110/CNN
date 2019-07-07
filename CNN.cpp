@@ -256,7 +256,8 @@ CNN::CNN(UINT srcW, UINT srcH, Layer* layer, UINT layersize) {
 	NumConv = 0;
 	NumPool = 0;
 	layerSize = layersize;
-	//レイヤーカウント
+	UINT affIndex = 0;
+	//レイヤーカウント, AffineIndex探索
 	for (UINT i = 0; i < layerSize; i++) {
 		switch (layer[i].layerName) {
 		case CONV:
@@ -264,6 +265,9 @@ CNN::CNN(UINT srcW, UINT srcH, Layer* layer, UINT layersize) {
 			break;
 		case POOL:
 			NumPool++;
+			break;
+		case AFFINE:
+			affIndex = i;
 			break;
 		}
 	}
@@ -275,9 +279,9 @@ CNN::CNN(UINT srcW, UINT srcH, Layer* layer, UINT layersize) {
 	po = new Pooling * [NumPool];
 	UINT NumDepth = 0;
 
-	if (layer[NumConv + NumPool].NumDepthNotInput > MAX_DEPTH_NUM - 1)NumDepth = MAX_DEPTH_NUM;
+	if (layer[affIndex].NumDepthNotInput > MAX_DEPTH_NUM - 1)NumDepth = MAX_DEPTH_NUM;
 	else
-		NumDepth = layer[NumConv + NumPool].NumDepthNotInput + 1;
+		NumDepth = layer[affIndex].NumDepthNotInput + 1;
 
 	//レイヤー生成
 	UINT convCnt = 0;
@@ -322,18 +326,20 @@ CNN::CNN(UINT srcW, UINT srcH, Layer* layer, UINT layersize) {
 			if (i > 0) {
 				if (layer[i - 1].layerName == CONV)cn[convCnt]->errCn = cn[convCnt - 1];
 				if (layer[i - 1].layerName == POOL)cn[convCnt]->errPo = po[poolCnt - 1];
-				if (layer[i - 1].layerName == AFFINE)cn[convCnt]->inAf = nn;
+				if (layer[i - 1].layerName == AFFINE)cn[convCnt]->errAf = nn;
 			}
 			//入力側接続
-			if (layer[i + 1].layerName == CONV)cn[convCnt]->inCn = cn[convCnt + 1];
-			if (layer[i + 1].layerName == POOL)cn[convCnt]->inPo = po[poolCnt];
-			if (layer[i + 1].layerName == AFFINE)cn[convCnt]->inAf = nn;
+			if (i < layerSize - 1) {
+				if (layer[i + 1].layerName == CONV)cn[convCnt]->inCn = cn[convCnt + 1];
+				if (layer[i + 1].layerName == POOL)cn[convCnt]->inPo = po[poolCnt];
+				if (layer[i + 1].layerName == AFFINE)cn[convCnt]->inAf = nn;
+			}
 			convCnt++;
 			break;
 		case POOL:
 			//誤差側接続
 			if (layer[i - 1].layerName == CONV)po[poolCnt]->errCn = cn[convCnt - 1];
-			if (layer[i - 1].layerName == AFFINE)po[poolCnt]->inAf = nn;
+			if (layer[i - 1].layerName == AFFINE)po[poolCnt]->errAf = nn;
 			//入力側接続
 			if (layer[i + 1].layerName == CONV)po[poolCnt]->inCn = cn[convCnt];
 			if (layer[i + 1].layerName == AFFINE)po[poolCnt]->inAf = nn;
