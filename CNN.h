@@ -128,6 +128,7 @@ public:
 	void Detection(UINT SearchNum);
 	void DetectionGradCAM(UINT SearchNum, UINT srcMapWid, UINT mapslide);
 	void SetLearningLate(float nn, float cn);
+	void SetActivationAlpha(float nn, float cn);
 	void Training();
 	void TrainingFp();
 	void TrainingBp();
@@ -139,6 +140,8 @@ public:
 	void GradCAMDraw(float x = 50.0f, float y = 200.0f);
 	float GetOutputEl(UINT ElNum, UINT inputsetInd = 0);
 	ID3D12Resource* GetOutputResource();
+	ID3D12Resource* GetOutErrResource();
+	void SetInErrResource(ID3D12Resource* res);
 	void SetTargetEl(float el, UINT ElNum);
 	void FirstInput(float el, UINT ElNum, UINT inputsetInd = 0);
 	void InputArray(float* inArr, UINT arrNum, UINT inputsetInd = 0);

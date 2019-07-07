@@ -408,6 +408,11 @@ void CNN::SetLearningLate(float nN, float cN) {
 	nn->SetLearningLate(nN);
 }
 
+void CNN::SetActivationAlpha(float nN, float cN) {
+	for (UINT i = 0; i < NumConv; i++)cn[i]->SetActivationAlpha(cN);
+	nn->SetActivationAlpha(nN);
+}
+
 void CNN::Training() {
 	TrainingFp();
 	TrainingBp();
@@ -541,6 +546,35 @@ ID3D12Resource* CNN::GetOutputResource() {
 		break;
 	}
 	return nullptr;
+}
+
+ID3D12Resource* CNN::GetOutErrResource() {
+	switch (firstLayer) {
+	case CONV:
+		return cn[0]->GetOutErrorResource();
+		break;
+	case POOL:
+		return po[0]->GetOutErrorResource();
+		break;
+	case AFFINE:
+		return nn->GetOutErrorResource();
+		break;
+	}
+	return nullptr;
+}
+
+void CNN::SetInErrResource(ID3D12Resource* res) {
+	switch (endLayer) {
+	case CONV:
+		cn[NumConv - 1]->SetInErrorResource(res);
+		break;
+	case POOL:
+		po[NumPool - 1]->SetInErrorResource(res);
+		break;
+	case AFFINE:
+		nn->SetInErrorResource(res);
+		break;
+	}
 }
 
 void CNN::SetTargetEl(float el, UINT ElNum) {
