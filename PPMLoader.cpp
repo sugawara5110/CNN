@@ -49,15 +49,17 @@ PPMLoader::PPMLoader(wchar_t* pass, UINT outW, UINT outH, PPM_MODE mode) {
 		//サイズ変換, グレースケール変換
 		for (UINT y = 0; y < outH; y++) {
 			for (UINT x = 0; x < outW; x++) {
-				UINT inHeiInd = (UINT)((float)inH / outH * y) * inW * 3;
-				UINT inWidInd = (UINT)((float)inW / outW * x * 3);
+				float scaleY = (float)inH / (float)outH;
+				float scaleX = (float)inW / (float)outW;
+				UINT inHeiInd = (UINT)(scaleY * y) * inW * 3;
+				UINT inWidInd = (UINT)(scaleX * x) * 3;
 				UINT inInd = inHeiInd + inWidInd;
 				if (mode == GRAYSCALE) {
 					BYTE gray = (tmpimage[inInd] + tmpimage[inInd + 1] + tmpimage[inInd + 2]) / 3;//grayscale
 					image[outH * outW * fileCount + outW * y + x] = gray;
 				}
 				else {
-					UINT imIndexst = outH * outW * modeScale * fileCount + outW * modeScale * y + x;
+					UINT imIndexst = outH * outW * modeScale * fileCount + outW * modeScale * y + x * modeScale;
 					image[imIndexst] = tmpimage[inInd];
 					image[imIndexst + 1] = tmpimage[inInd + 1];
 					image[imIndexst + 2] = tmpimage[inInd + 2];
