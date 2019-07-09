@@ -311,7 +311,8 @@ CNN::CNN(UINT srcW, UINT srcH, Layer* layer, UINT layersize) {
 			for (UINT i1 = 1; i1 < NumDepth; i1++)numN[i1] = layer[i].numNode[i1 - 1];
 			nn = new Affine(layer[i].acName, layer[i].topAcName, wid, hei, numN, NumDepth, layer[i].NumFilter,
 				layer[0].maxThread);
-			wid = hei = (UINT)sqrt(numN[NumDepth - 1]);
+			wid = layer[i].topNodeWid;
+			hei = numN[NumDepth - 1] / wid;
 			break;
 		}
 	}

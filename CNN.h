@@ -102,6 +102,7 @@ struct Layer {
 	UINT NumConvFilterWid;//畳み込みフィルターサイズ
 	UINT NumConvFilterSlide;//畳み込みフィルタースライド量
 	UINT numNode[MAX_DEPTH_NUM - 1];//Affineのノード数(入力層除き)
+	UINT topNodeWid = 1;//Affineの次のNodeへ出力する際のwidSize
 	UINT NumDepthNotInput;//Affineの深さ(入力除く)
 	ActivationName acName;//活性化関数名
 	ActivationName topAcName;//活性化関数名最終出力(Affineのみ)
