@@ -35,7 +35,7 @@ protected:
 	UINT NumFilter;
 
 public:
-	Affine(ActivationName activationName, ActivationName topActivationName, UINT inW, UINT inH, UINT* numNode,
+	Affine(ActivationName activationName, OptimizerName optName, ActivationName topActivationName, UINT inW, UINT inH, UINT* numNode,
 		int depth, UINT split, UINT inputsetnum);
 	void Draw(float x, float y);
 	void InConnection();
@@ -78,7 +78,7 @@ protected:
 	UINT NumFilter;
 
 public:
-	Convolution(ActivationName activationName, UINT width, UINT height, UINT filNum, UINT inputsetnum, UINT elnumwid, UINT filstep);
+	Convolution(ActivationName activationName, UINT width, UINT height, UINT filNum, bool DeConvolutionMode, UINT inputsetnum, UINT elnumwid, UINT filstep);
 	void Draw(float x, float y);
 	void InConnection();
 	void ErrConnection(bool update);
@@ -101,11 +101,13 @@ struct Layer {
 	UINT NumFilter;
 	UINT NumConvFilterWid;//畳み込みフィルターサイズ
 	UINT NumConvFilterSlide;//畳み込みフィルタースライド量
+	bool DeConvolutionMode = false;
 	UINT numNode[MAX_DEPTH_NUM - 1];//Affineのノード数(入力層除き)
 	UINT topNodeWid = 1;//Affineの次のNodeへ出力する際のwidSize
 	UINT NumDepthNotInput;//Affineの深さ(入力除く)
 	ActivationName acName;//活性化関数名
-	ActivationName topAcName;//活性化関数名最終出力(Affineのみ)
+	OptimizerName optName = SGD;//オプティマイザー
+	ActivationName topAcName = CrossEntropySigmoid;//活性化関数名最終出力(Affineのみ)
 };
 
 class CNN {
@@ -128,8 +130,15 @@ public:
 	~CNN();
 	void Detection(UINT SearchNum);
 	void DetectionGradCAM(UINT SearchNum, UINT srcMapWid, UINT mapslide);
-	void SetLearningLate(float nn, float cn);
+	void SetLearningLate(float nn, float cn, float cnB = 0.0f);
+	void setOptimizerParameter(float LearningRateNN = 0.001f, float AttenuationRate1NN = 0.9f,
+		float AttenuationRate2NN = 0.999f, float DivergencePreventionNN = 0.00000001f,
+		float LearningRateCN = 0.001f, float AttenuationRate1CN = 0.9f,
+		float AttenuationRate2CN = 0.999f, float DivergencePreventionCN = 0.00000001f,
+		float LearningRateCNB = 0.001f, float AttenuationRate1CNB = 0.9f,
+		float AttenuationRate2CNB = 0.999f, float DivergencePreventionCNB = 0.00000001f);
 	void SetActivationAlpha(float nn, float cn);
+	void SetdropThreshold(float* dropNN, float dropCN);
 	void Training();
 	void TrainingFp();
 	void TrainingBp();

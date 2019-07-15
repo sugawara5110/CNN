@@ -23,14 +23,13 @@ void GradCAM::Draw(float x, float y) {
 	dgc.Draw();
 }
 
-Affine::Affine(ActivationName activationName, ActivationName topActivationName, UINT inW, UINT inH, UINT* numNode,
+Affine::Affine(ActivationName activationName, OptimizerName optName, ActivationName topActivationName, UINT inW, UINT inH, UINT* numNode,
 	int depth, UINT split, UINT inputsetnum) :
 	DxNeuralNetwork(numNode, depth, split, inputsetnum) {
 
 	NumFilter = split;
-	ComCreate(activationName, topActivationName);
+	ComCreate(activationName, optName, topActivationName);
 	SetActivationAlpha(0.05f);
-	SetLearningLate(0.12f);
 	CreareNNTexture(inW, inH, NumFilter);
 	dnn.SetCommandList(0);
 	dnn.GetVBarray2D(1);
@@ -165,8 +164,8 @@ void Pooling::DetectionConnection(UINT SearchNum, bool GradCAM_ON) {
 	}
 }
 
-Convolution::Convolution(ActivationName activationName, UINT width, UINT height, UINT filNum, UINT inputsetnum, UINT elnumwid, UINT filstep) :
-	DxConvolution(width, height, filNum, inputsetnum, elnumwid, filstep) {
+Convolution::Convolution(ActivationName activationName, UINT width, UINT height, UINT filNum, bool DeConvolutionMode, UINT inputsetnum, UINT elnumwid, UINT filstep) :
+	DxConvolution(width, height, filNum, DeConvolutionMode, inputsetnum, elnumwid, filstep) {
 
 	NumFilter = filNum;
 	ComCreate(activationName);
@@ -292,7 +291,7 @@ CNN::CNN(UINT srcW, UINT srcH, Layer* layer, UINT layersize) {
 	for (UINT i = 0; i < layerSize; i++) {
 		switch (layer[i].layerName) {
 		case CONV:
-			cn[convCnt] = new Convolution(layer[i].acName, wid, hei, layer[i].NumFilter, layer[0].maxThread,
+			cn[convCnt] = new Convolution(layer[i].acName, wid, hei, layer[i].NumFilter, layer[i].DeConvolutionMode, layer[0].maxThread,
 				layer[i].NumConvFilterWid, layer[i].NumConvFilterSlide);
 			wid = cn[convCnt]->GetOutWidth();
 			hei = cn[convCnt++]->GetOutHeight();
@@ -309,7 +308,7 @@ CNN::CNN(UINT srcW, UINT srcH, Layer* layer, UINT layersize) {
 		case AFFINE:
 			numN[0] = wid * hei;
 			for (UINT i1 = 1; i1 < NumDepth; i1++)numN[i1] = layer[i].numNode[i1 - 1];
-			nn = new Affine(layer[i].acName, layer[i].topAcName, wid, hei, numN, NumDepth, layer[i].NumFilter,
+			nn = new Affine(layer[i].acName, layer[i].optName, layer[i].topAcName, wid, hei, numN, NumDepth, layer[i].NumFilter,
 				layer[0].maxThread);
 			wid = layer[i].topNodeWid;
 			hei = numN[NumDepth - 1] / wid;
@@ -404,14 +403,39 @@ void CNN::DetectionGradCAM(UINT SearchNum, UINT srcMapWid, UINT mapslide) {
 	gc->GradCAMSynthesis(srcMapWid, srcMapWid, mapslide);
 }
 
-void CNN::SetLearningLate(float nN, float cN) {
-	for (UINT i = 0; i < NumConv; i++)cn[i]->SetLearningLate(cN, 0.0f);
-	nn->SetLearningLate(nN);
+void CNN::SetLearningLate(float nN, float cN, float cnB) {
+	for (UINT i = 0; i < NumConv; i++) {
+		cn[i]->setOptimizerParameterFil(cN);
+		cn[i]->setOptimizerParameterBias(cnB);
+	}
+	nn->setOptimizerParameter(nN);
+}
+
+void CNN::setOptimizerParameter(float LearningRateNN, float AttenuationRate1NN,
+	float AttenuationRate2NN, float DivergencePreventionNN,
+	float LearningRateCN, float AttenuationRate1CN,
+	float AttenuationRate2CN, float DivergencePreventionCN,
+	float LearningRateCNB, float AttenuationRate1CNB,
+	float AttenuationRate2CNB, float DivergencePreventionCNB) {
+
+	for (UINT i = 0; i < NumConv; i++) {
+		cn[i]->setOptimizerParameterFil(LearningRateCN, AttenuationRate1CN,
+			AttenuationRate2CN, DivergencePreventionCN);
+		cn[i]->setOptimizerParameterBias(LearningRateCNB, AttenuationRate1CNB,
+			AttenuationRate2CNB, DivergencePreventionCNB);
+	}
+	nn->setOptimizerParameter(LearningRateNN, AttenuationRate1NN,
+		AttenuationRate2NN, DivergencePreventionNN);
 }
 
 void CNN::SetActivationAlpha(float nN, float cN) {
 	for (UINT i = 0; i < NumConv; i++)cn[i]->SetActivationAlpha(cN);
 	nn->SetActivationAlpha(nN);
+}
+
+void CNN::SetdropThreshold(float* dropNN, float dropCN) {
+	for (UINT i = 0; i < NumConv; i++)cn[i]->SetdropThreshold(dropCN);
+	nn->SetdropThreshold(dropNN);
 }
 
 void CNN::Training() {
@@ -420,14 +444,6 @@ void CNN::Training() {
 }
 
 void CNN::TrainingFp() {
-	for (UINT i = 0; i < NumConv; i++)cn[i]->SetdropThreshold(0.0f);
-	float drop[MAX_DEPTH_NUM];
-	drop[0] = 0.0f;
-	drop[1] = 0.1f;
-	drop[2] = 0.0f;
-	drop[3] = 0.0f;
-	drop[4] = 0.0f;
-	nn->SetdropThreshold(drop);
 	switch (firstLayer) {
 	case CONV:
 		cn[0]->InConnection();
@@ -475,14 +491,6 @@ float CNN::GetcrossEntropyErrorTest() {
 }
 
 void CNN::Test() {
-	for (UINT i = 0; i < NumConv; i++)cn[i]->SetdropThreshold(0.0f);
-	float drop[MAX_DEPTH_NUM];
-	drop[0] = 0.0f;
-	drop[1] = 0.0f;
-	drop[2] = 0.0f;
-	drop[3] = 0.0f;
-	drop[4] = 0.0f;
-	nn->SetdropThreshold(drop);
 	switch (firstLayer) {
 	case CONV:
 		cn[0]->TestConnection();
