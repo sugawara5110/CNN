@@ -164,11 +164,11 @@ void Pooling::DetectionConnection(UINT SearchNum, bool GradCAM_ON) {
 	}
 }
 
-Convolution::Convolution(ActivationName activationName, UINT width, UINT height, UINT filNum, bool DeConvolutionMode, UINT inputsetnum, UINT elnumwid, UINT filstep) :
+Convolution::Convolution(ActivationName activationName, OptimizerName optName, UINT width, UINT height, UINT filNum, bool DeConvolutionMode, UINT inputsetnum, UINT elnumwid, UINT filstep) :
 	DxConvolution(width, height, filNum, DeConvolutionMode, inputsetnum, elnumwid, filstep) {
 
 	NumFilter = filNum;
-	ComCreate(activationName);
+	ComCreate(activationName, optName);
 	SetActivationAlpha(0.05f);
 	CreareNNTexture(elnumwid, elnumwid, NumFilter);
 	dcn.SetCommandList(0);
@@ -291,8 +291,8 @@ CNN::CNN(UINT srcW, UINT srcH, Layer* layer, UINT layersize) {
 	for (UINT i = 0; i < layerSize; i++) {
 		switch (layer[i].layerName) {
 		case CONV:
-			cn[convCnt] = new Convolution(layer[i].acName, wid, hei, layer[i].NumFilter, layer[i].DeConvolutionMode, layer[0].maxThread,
-				layer[i].NumConvFilterWid, layer[i].NumConvFilterSlide);
+			cn[convCnt] = new Convolution(layer[i].acName, layer[i].optName, wid, hei, layer[i].NumFilter,
+				layer[i].DeConvolutionMode, layer[0].maxThread, layer[i].NumConvFilterWid, layer[i].NumConvFilterSlide);
 			wid = cn[convCnt]->GetOutWidth();
 			hei = cn[convCnt++]->GetOutHeight();
 			if (convCnt == NumConv) {

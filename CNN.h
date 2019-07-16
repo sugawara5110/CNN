@@ -78,7 +78,7 @@ protected:
 	UINT NumFilter;
 
 public:
-	Convolution(ActivationName activationName, UINT width, UINT height, UINT filNum, bool DeConvolutionMode, UINT inputsetnum, UINT elnumwid, UINT filstep);
+	Convolution(ActivationName activationName, OptimizerName optName, UINT width, UINT height, UINT filNum, bool DeConvolutionMode, UINT inputsetnum, UINT elnumwid, UINT filstep);
 	void Draw(float x, float y);
 	void InConnection();
 	void ErrConnection(bool update);
