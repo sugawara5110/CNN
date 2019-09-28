@@ -32,18 +32,19 @@ PPMLoader::PPMLoader(wchar_t* pass, UINT outW, UINT outH, PPM_MODE mode) {
 		int inH = 0;
 		int pix = 0;
 		char* name = sf->GetFileName(0, k);
-		fopen_s(&fp, name, "rt");
-		fgets(line, sizeof(line), fp);//1行飛ばす
+		fopen_s(&fp, name, "rb");
+		fgets(line, sizeof(line), fp);//1行飛ばす, P6
 		fgets(line, sizeof(line), fp);
-		if (line[0] == '#')fgets(line, sizeof(line), fp);//コメントだった場合
+		while (line[0] == '#') {
+			fgets(line, sizeof(line), fp);//コメントをスキップ
+		}
 		sscanf_s(line, "%d %d", &inW, &inH);
-		UINT inNum = inW * 3 * inW;
+		UINT inNum = inW * 3 * inH;
 		tmpimage = new BYTE[inNum];
 		size = sizeof(BYTE) * inNum;
 		offset = inNum;
 		fgets(line, sizeof(line), fp);
 		sscanf_s(line, "%d", &pix);
-		fseek(fp, -offset, SEEK_END);
 		//ここからpixdata, RGBの順に1byteずつ1ピクセル3byte
 		fread(tmpimage, size, 1, fp);
 		//サイズ変換, グレースケール変換
