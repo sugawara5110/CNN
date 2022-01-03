@@ -10,6 +10,7 @@ GradCAM::GradCAM(UINT srcWid, UINT srcHei, UINT SizeFeatureMapW, UINT SizeFeatur
 	DxGradCAM(SizeFeatureMapW, SizeFeatureMapH, NumGradientEl, NumFil, inputsetnum) {
 
 	ComCreate(srcWid, srcHei, 1.0f);
+	dgc.SetName("dgc_GradCAM");
 	dgc.SetCommandList(0);
 	dgc.GetVBarray2D(1);
 	dgc.TextureInit(srcWid, srcHei);
@@ -23,6 +24,17 @@ void GradCAM::Draw(float x, float y) {
 	dgc.Draw();
 }
 
+static float distanceCalculation(CoordTf::VECTOR3& a, CoordTf::VECTOR3& b) {
+	return std::sqrtf(std::powf(a.x - b.x, 2) + std::powf(a.y - b.y, 2) + std::powf(a.z - b.z, 2));
+}
+
+static float rotation(CoordTf::VECTOR3& a, CoordTf::VECTOR3& b) {
+	float x = b.x - a.x;
+	float y = b.z - a.z;
+	float ret = atan(x / y) * 180.0f / 3.141592653589f;
+	return ret;
+}
+
 Affine::Affine(ActivationName activationName, OptimizerName optName, ActivationName topActivationName, UINT inW, UINT inH, UINT* numNode,
 	int depth, UINT split, UINT inputsetnum) :
 	DxNeuralNetwork(numNode, depth, split, inputsetnum) {
@@ -31,17 +43,76 @@ Affine::Affine(ActivationName activationName, OptimizerName optName, ActivationN
 	ComCreate(activationName, optName, topActivationName);
 	SetActivationAlpha(0.05f);
 	CreareNNTexture(inW, inH, NumFilter);
+	dnn.SetName("dnn_Affine");
 	dnn.SetCommandList(0);
 	dnn.GetVBarray2D(1);
 	dnn.TextureInit(inW, inH * NumFilter);
 	dnn.TexOn();
 	dnn.CreateBox(0.0f, 0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f, TRUE, TRUE);
+
+	using namespace CoordTf;
+	using namespace CreateGeometry;
+	VECTOR3 v3 = { 0,0,1 };
+	VECTOR3 v3s = { 1.0f,1.0f,1.0f };
+	ver* v = CreateGeometry::createCube(1, &v3, &v3s, false);
+	UINT* ind = createCubeIndex(1);
+	VertexBC bc[24];
+	for (int i = 0; i < 24; i++) {
+		bc[i].Pos = v[i].Pos;
+		bc[i].color.as(1, 1, 1, 1);
+	}
+	pdArr = std::make_unique<PolygonData>();
+	pdArr.get()->GetVBarray(SQUARE, weightNumAll);
+	pdArr.get()->setVertex(bc, 24, ind, 36);
+	pdArr.get()->Create(false, -1, false, false);
+
+	nPos = std::make_unique<std::unique_ptr<CoordTf::VECTOR3[]>[]>(Depth);
+	for (int i = 0; i < Depth; i++) {
+		nPos[i] = std::make_unique<CoordTf::VECTOR3[]>(NumNode[i]);
+	}
+
+	for (int k = 0; k < Depth; k++) {
+		for (UINT i = 0; i < NumNode[k]; i++) {
+			float st = -(float)NumNode[k] * 0.5f;
+			nPos[k][i].as(st + (float)i, 0, (float)k * 40);
+		}
+	}
+
+	nAngleY = std::make_unique<float[]>(weightNumAll);
+	nSize = std::make_unique<float[]>(weightNumAll);
+
+	int indW = 0;
+	for (int k = 0; k < Depth - 1; k++) {
+		for (UINT i = 0; i < NumNode[k]; i++) {
+			for (UINT j = 0; j < NumNode[k + 1]; j++) {
+				nSize[indW] = distanceCalculation(nPos[k][i], nPos[k + 1][j]) * 0.5f;
+				nAngleY[indW++] = rotation(nPos[k][i], nPos[k + 1][j]);
+			}
+		}
+	}
 }
 
 void Affine::Draw(float x, float y) {
 	dnn.Update(x, y, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f, 20.0f, 20.0f * NumFilter);
 	dnn.CopyResource(GetNNTextureResource(), GetNNTextureResourceStates());
 	dnn.Draw();
+}
+
+void Affine::Draw3D() {
+	static float th = 0;
+	if ((th += 1.0f) > 360.0f)th = 0;
+	int ind = 0;
+	for (int k = 0; k < Depth - 1; k++) {
+		for (UINT i = 0; i < NumNode[k]; i++) {
+			for (UINT j = 0; j < NumNode[k + 1]; j++) {
+				float c = weight[ind];
+				pdArr.get()->Instancing(nPos[k][i], { 0,nAngleY[ind],0 }, { 0.01f,0.01f,nSize[ind] }, { c,c,c,1.0f });
+				ind++;
+			}
+		}
+	}
+	pdArr.get()->InstancingUpdate(1);
+	pdArr.get()->Draw();
 }
 
 void Affine::InConnection() {
@@ -103,6 +174,7 @@ Pooling::Pooling(UINT width, UINT height, UINT poolNum, UINT inputsetnum) :
 	UINT wid = GetOutWidth();
 	UINT hei = GetOutHeight();
 	CreareNNTexture(wid, hei, NumFilter);
+	dpo.SetName("dpo_Pooling");
 	dpo.SetCommandList(0);
 	dpo.GetVBarray2D(1);
 	dpo.TextureInit(wid, hei * NumFilter);
@@ -171,6 +243,7 @@ Convolution::Convolution(ActivationName activationName, OptimizerName optName, U
 	ComCreate(activationName, optName);
 	SetActivationAlpha(0.05f);
 	CreareNNTexture(elnumwid, elnumwid, NumFilter);
+	dcn.SetName("dcn_Convolution");
 	dcn.SetCommandList(0);
 	dcn.GetVBarray2D(1);
 	dcn.TextureInit(elnumwid, elnumwid * NumFilter);
@@ -512,6 +585,7 @@ void CNN::TrainingDraw(float x0, float y) {
 		x += 20.0f;
 	}
 	nn->Draw(x, y);
+	//nn->Draw3D();
 }
 
 void CNN::GradCAMDraw(float x, float y) {

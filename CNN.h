@@ -6,7 +6,9 @@
 #ifndef Class_CNN_Header
 #define Class_CNN_Header
 
-#include "../Common/Direct3DWrapper/Dx_NN.h"
+#include "../Common/Direct3DWrapperNN/Dx_NN.h"
+#include "../CreateGeometry/CreateGeometry.h"
+#include "../Common/Direct3DWrapper/DX_3DCG/Dx_PolygonData.h"
 
 class CNN;
 class Convolution;
@@ -33,11 +35,16 @@ protected:
 	Pooling* inPo = nullptr;
 	PolygonData2D dnn;
 	UINT NumFilter;
+	std::unique_ptr<PolygonData> pdArr = nullptr;
+	std::unique_ptr<std::unique_ptr<CoordTf::VECTOR3[]>[]> nPos = nullptr;
+	std::unique_ptr<float[]> nAngleY = nullptr;
+	std::unique_ptr<float[]> nSize = nullptr;
 
 public:
 	Affine(ActivationName activationName, OptimizerName optName, ActivationName topActivationName, UINT inW, UINT inH, UINT* numNode,
 		int depth, UINT split, UINT inputsetnum);
 	void Draw(float x, float y);
+	void Draw3D();
 	void InConnection();
 	void ErrConnection(bool update);
 	void TestConnection();

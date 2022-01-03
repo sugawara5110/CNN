@@ -8,13 +8,13 @@
 
 Graph::Graph() {
 	graph = new PolygonData2D();
+	graph->SetName("graph_Graph");
 	graph->GetVBarray2D(1);
 	graph->SetCommandList(0);
 }
 
 Graph::~Graph() {
 	S_DELETE(graph);
-	for (int i = 0; i < pih; i++)ARR_DELETE(point[i]);
 	ARR_DELETE(point);
 }
 
@@ -24,25 +24,25 @@ void Graph::CreateGraph(float x, float y, float w, float h, int pw, int ph) {
 	graph->TexOn();
 	graph->TextureInit(pw, ph);
 	graph->CreateBox(x, y, 0.1f, w, h, 1.0f, 1.0f, 1.0f, 1.0f, TRUE, TRUE);
-	point = new UINT*[ph];
-	for (int i = 0; i < ph; i++)point[i] = new UINT[pw];
+	point = new UCHAR[ph * pw * 4];
 	Clear();
 }
 
 void Graph::Clear() {
-	for (int j = 0; j < pih; j++) {
-		for (int i = 0; i < piw; i++) {
-			point[j][i] = 0xffff0000;
-		}
+	for (int j = 0; j < pih * piw * 4; j++) {
+		point[j] = 0;
 	}
 }
 
 void Graph::SetData(int cnt, int data, UINT col) {
-	point[data][cnt] = col;
+	point[data * piw * 4 + cnt * 4 + 0] = (col >> 24) & 0xff;
+	point[data * piw * 4 + cnt * 4 + 1] = (col >> 16) & 0xff;
+	point[data * piw * 4 + cnt * 4 + 2] = (col >> 8) & 0xff;
+	point[data * piw * 4 + cnt * 4 + 3] = (col >> 0) & 0xff;
 }
 
-void Graph::Draw() {
+void Graph::Draw(int com_no) {
 	graph->Update(0, 0, 0, 0, 0, 0, 0, 1.0f, 1.0f);
-	graph->SetTextureMPixel(point, 0xff, 0xff, 0xff, 0xff, 0);
+	graph->SetTextureMPixel(com_no, point, 0);
 	graph->Draw();
 }

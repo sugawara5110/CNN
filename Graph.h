@@ -6,14 +6,14 @@
 #ifndef Class_Graph_Header
 #define Class_Graph_Header
 
-#include "../Common/Direct3DWrapper/Dx_NN.h"
-#include "../Common/Direct3DWrapper/DxText.h"
+#include "../Common/Direct3DWrapperNN/Dx_NN.h"
+#include "../Common/Direct3DWrapperOption/DxText.h"
 
 class Graph {
 
 private:
-	UINT **point;
-	PolygonData2D *graph;
+	UCHAR* point;
+	PolygonData2D* graph;
 	int piw, pih;
 
 public:
@@ -22,7 +22,7 @@ public:
 	void CreateGraph(float x, float y, float w, float h, int pw, int ph);
 	void Clear();
 	void SetData(int cnt, int data, UINT col);
-	void Draw();
+	void Draw(int com_no);
 };
 
 #endif
