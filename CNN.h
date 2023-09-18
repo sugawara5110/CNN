@@ -8,7 +8,7 @@
 
 #include "../Common/Direct3DWrapperNN/Dx_NN.h"
 #include "../CreateGeometry/CreateGeometry.h"
-#include "../Common/Direct3DWrapper/DX_3DCG/Dx_PolygonData.h"
+#include "../Common/Direct3DWrapper/Dx12Process.h"
 
 class CNN;
 class Convolution;

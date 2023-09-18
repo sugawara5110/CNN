@@ -10,7 +10,6 @@ Graph::Graph() {
 	graph = new PolygonData2D();
 	graph->SetName("graph_Graph");
 	graph->GetVBarray2D(1);
-	graph->SetCommandList(0);
 }
 
 Graph::~Graph() {
@@ -23,7 +22,7 @@ void Graph::CreateGraph(float x, float y, float w, float h, int pw, int ph) {
 	pih = ph;
 	graph->TexOn();
 	graph->TextureInit(pw, ph);
-	graph->CreateBox(x, y, 0.1f, w, h, 1.0f, 1.0f, 1.0f, 1.0f, TRUE, TRUE);
+	graph->CreateBox(0, x, y, 0.1f, w, h, 1.0f, 1.0f, 1.0f, 1.0f, TRUE, TRUE);
 	point = new UCHAR[ph * pw * 4];
 	Clear();
 }
@@ -44,5 +43,5 @@ void Graph::SetData(int cnt, int data, UINT col) {
 void Graph::Draw(int com_no) {
 	graph->Update(0, 0, 0, 0, 0, 0, 0, 1.0f, 1.0f);
 	graph->SetTextureMPixel(com_no, point, 0);
-	graph->Draw();
+	graph->Draw(0);
 }

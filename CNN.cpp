@@ -11,17 +11,16 @@ GradCAM::GradCAM(UINT srcWid, UINT srcHei, UINT SizeFeatureMapW, UINT SizeFeatur
 
 	ComCreate(srcWid, srcHei, 1.0f);
 	dgc.SetName("dgc_GradCAM");
-	dgc.SetCommandList(0);
 	dgc.GetVBarray2D(1);
 	dgc.TextureInit(srcWid, srcHei);
 	dgc.TexOn();
-	dgc.CreateBox(0.0f, 0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f, TRUE, TRUE);
+	dgc.CreateBox(0, 0.0f, 0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f, TRUE, TRUE);
 }
 
 void GradCAM::Draw(float x, float y) {
 	dgc.Update(x, y, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f, 300.0f, 200.0f);
-	dgc.CopyResource(GetPixel(), GetNNTextureResourceStates());
-	dgc.Draw();
+	dgc.CopyResource(0, GetPixel(), GetNNTextureResourceStates());
+	dgc.Draw(0);
 }
 
 static float distanceCalculation(CoordTf::VECTOR3& a, CoordTf::VECTOR3& b) {
@@ -44,11 +43,10 @@ Affine::Affine(ActivationName activationName, OptimizerName optName, ActivationN
 	SetActivationAlpha(0.05f);
 	CreareNNTexture(inW, inH, NumFilter);
 	dnn.SetName("dnn_Affine");
-	dnn.SetCommandList(0);
 	dnn.GetVBarray2D(1);
 	dnn.TextureInit(inW, inH * NumFilter);
 	dnn.TexOn();
-	dnn.CreateBox(0.0f, 0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f, TRUE, TRUE);
+	dnn.CreateBox(0, 0.0f, 0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f, TRUE, TRUE);
 
 	using namespace CoordTf;
 	using namespace CreateGeometry;
@@ -64,7 +62,7 @@ Affine::Affine(ActivationName activationName, OptimizerName optName, ActivationN
 	pdArr = std::make_unique<PolygonData>();
 	pdArr.get()->GetVBarray(SQUARE, weightNumAll);
 	pdArr.get()->setVertex(bc, 24, ind, 36);
-	pdArr.get()->Create(false, -1, false, false);
+	pdArr.get()->Create(0, false, -1, false, false);
 
 	nPos = std::make_unique<std::unique_ptr<CoordTf::VECTOR3[]>[]>(Depth);
 	for (int i = 0; i < Depth; i++) {
@@ -94,8 +92,8 @@ Affine::Affine(ActivationName activationName, OptimizerName optName, ActivationN
 
 void Affine::Draw(float x, float y) {
 	dnn.Update(x, y, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f, 20.0f, 20.0f * NumFilter);
-	dnn.CopyResource(GetNNTextureResource(), GetNNTextureResourceStates());
-	dnn.Draw();
+	dnn.CopyResource(0, GetNNTextureResource(), GetNNTextureResourceStates());
+	dnn.Draw(0);
 }
 
 void Affine::Draw3D() {
@@ -112,7 +110,7 @@ void Affine::Draw3D() {
 		}
 	}
 	pdArr.get()->InstancingUpdate(1);
-	pdArr.get()->Draw();
+	pdArr.get()->Draw(0);
 }
 
 void Affine::InConnection() {
@@ -175,17 +173,16 @@ Pooling::Pooling(UINT width, UINT height, UINT poolNum, UINT inputsetnum) :
 	UINT hei = GetOutHeight();
 	CreareNNTexture(wid, hei, NumFilter);
 	dpo.SetName("dpo_Pooling");
-	dpo.SetCommandList(0);
 	dpo.GetVBarray2D(1);
 	dpo.TextureInit(wid, hei * NumFilter);
 	dpo.TexOn();
-	dpo.CreateBox(0.0f, 0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f, TRUE, TRUE);
+	dpo.CreateBox(0, 0.0f, 0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f, TRUE, TRUE);
 }
 
 void Pooling::Draw(float x, float y) {
 	dpo.Update(x, y, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f, 20.0f, 20.0f * NumFilter);
-	dpo.CopyResource(GetNNTextureResource(), GetNNTextureResourceStates());
-	dpo.Draw();
+	dpo.CopyResource(0, GetNNTextureResource(), GetNNTextureResourceStates());
+	dpo.Draw(0);
 }
 
 void Pooling::InConnection() {
@@ -244,17 +241,16 @@ Convolution::Convolution(ActivationName activationName, OptimizerName optName, U
 	SetActivationAlpha(0.05f);
 	CreareNNTexture(elnumwid, elnumwid, NumFilter);
 	dcn.SetName("dcn_Convolution");
-	dcn.SetCommandList(0);
 	dcn.GetVBarray2D(1);
 	dcn.TextureInit(elnumwid, elnumwid * NumFilter);
 	dcn.TexOn();
-	dcn.CreateBox(0.0f, 0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f, TRUE, TRUE);
+	dcn.CreateBox(0, 0.0f, 0.0f, 0.0f, 0.1f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f, TRUE, TRUE);
 }
 
 void Convolution::Draw(float x, float y) {
 	dcn.Update(x, y, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f, 20.0f, 20.0f * NumFilter);
-	dcn.CopyResource(GetNNTextureResource(), GetNNTextureResourceStates());
-	dcn.Draw();
+	dcn.CopyResource(0, GetNNTextureResource(), GetNNTextureResourceStates());
+	dcn.Draw(0);
 }
 
 void Convolution::InConnection() {
